@@ -1,9 +1,8 @@
 import streamlit as st
 import logging
-#from streamlit_searchbox import st_searchbox # Opcional, pero mantenemos tus imports
 
 # ==============================================================================
-# 1. CONFIGURACIÓN E IMPORTACIONES SEGURAS (SIN CAMBIOS)
+# 1. CONFIGURACIÓN E IMPORTACIONES SEGURAS (INTACTO)
 # ==============================================================================
 logging.basicConfig(level=logging.INFO)
 
@@ -19,7 +18,7 @@ HERRAMIENTAS_MOD, HERRAMIENTAS_AVAILABLE = safe_import("apps.herramientas")
 BIBLIOTECA_MOD, BIBLIOTECA_AVAILABLE = safe_import("apps.biblioteca")
 
 # ==============================================================================
-# 2. DICCIONARIO DE TEXTOS (INTEGRO, SIN CAMBIOS)
+# 2. DICCIONARIO DE TEXTOS (INTACTO)
 # ==============================================================================
 TEXTS = {
     "title": {"Español": "🛠️ Toolkit DGI", "English": "🛠️ DGI Toolkit", "Français": "🛠️ Boîte à outils DGI"},
@@ -44,7 +43,7 @@ TEXTS = {
         "desc": {
             "Español": "Centro de utilidades digitales: herramientas de soporte para el mundo digital.", 
             "English": "Digital utility center: support tools for the digital world.", 
-            "Français": "Centre d'utilitaires numériques : outils de support para el mundo digital."
+            "Français": "Centre d'utilitaires numériques : outils de support pour le monde numérique."
         }
     },
     "mod_bib": {
@@ -55,7 +54,7 @@ TEXTS = {
 }
 
 # ==============================================================================
-# 3. CSS RESPONSIVO (CORRECCIÓN DE DISPLAY PARA MÓVIL)
+# 3. CSS (REDISEÑADO PARA CARDS REACTIVAS)
 # ==============================================================================
 def inject_custom_css():
     st.markdown("""
@@ -63,48 +62,32 @@ def inject_custom_css():
         [data-testid="stSidebar"] { background-color: #f0f2f6; }
         .stApp { background-color: #ffffff; }
         
-        /* BOTÓN RESPONSIVO: Asegura que el icono y el texto se vean siempre */
-        [data-testid="stMain"] div.stButton > button {
-            height: auto !important;
-            min-height: 60px !important;
+        /* Estilo de Card para los botones de módulos */
+        div.stButton > button {
             background-color: #ffffff !important;
             border: 1px solid #e0e0e0 !important;
-            border-radius: 10px !important;
-            display: flex !important;
-            flex-direction: row !important; /* Icono al lado del texto */
-            justify-content: flex-start !important;
-            align-items: center !important;
-            width: 100% !important;
-            padding: 10px 15px !important;
-            margin-bottom: 10px !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            height: auto !important;
+            min-height: 100px !important;
+            transition: all 0.2s ease-in-out !important;
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.05) !important;
         }
-        
-        /* Estilo del texto dentro del botón */
-        [data-testid="stMain"] div.stButton > button p { 
-            font-size: 18px !important; 
-            margin: 0 !important;
-            padding-left: 10px !important;
-            text-align: left !important;
-            white-space: normal !important;
+        div.stButton > button:hover {
+            border-color: #ff4b4b !important;
+            background-color: #fffafa !important;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.1) !important;
+            transform: translateY(-2px);
         }
-
-        /* Estilo del icono */
-        .module-icon-container {
-            font-size: 25px !important;
-            margin-right: 10px !important;
-        }
-
-        /* Forzar que las columnas no se achiquen a cero en móvil */
-        @media (max-width: 768px) {
-            [data-testid="column"] {
-                min-width: 100% !important;
-            }
+        div.stButton > button p {
+            font-size: 18px !important;
+            font-weight: 600 !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. APLICACIÓN PRINCIPAL
+# 4. APLICACIÓN PRINCIPAL (REFACTORIZADA EN ÁREA DE CARDS)
 # ==============================================================================
 def main():
     st.set_page_config(page_title="Toolkit DGI", layout="wide", page_icon="🛠️")
@@ -146,30 +129,28 @@ def main():
         }
     }
 
-    # Diseño principal: 2 columnas en Web, se apilan en Móvil
     col_izq, col_der = st.columns([7, 3])
 
     with col_izq:
         st.header(TEXTS["header_modules"][lang])
         keys = list(app_config.keys())
         
-        # SOLUCIÓN DE DISPLAY: Eliminamos sub-columnas complejas. 
-        # Ponemos el icono DENTRO del botón (o justo al lado) de forma simple.
-        for k in keys:
-            # Creamos una fila por módulo para máxima compatibilidad móvil
-            col_m1, col_m2 = st.columns([1, 10]) # Espacio mínimo para icono, máximo para botón
-            with col_m1:
-                st.markdown(f"<div class='module-icon-container'>{app_config[k]['icon']}</div>", unsafe_allow_html=True)
-            with col_m2:
-                if st.button(f"{app_config[k]['name']}", key=f"btn_{k}"):
+        # --- NUEVA LÓGICA DE CARDS REACTIVAS ---
+        # Usamos 2 columnas simples en desktop que colapsan mejor en móvil
+        card_cols = st.columns(2)
+        for i, k in enumerate(keys):
+            with card_cols[i % 2]:
+                # El botón ahora contiene el Icono + Nombre para ser una sola zona de toque
+                button_label = f"{app_config[k]['icon']} {app_config[k]['name']}"
+                if st.button(button_label, key=f"btn_{k}", use_container_width=True):
                     st.session_state.active_app = k
                     st.rerun()
+        # ---------------------------------------
 
         st.markdown("---")
         active_key = st.session_state.active_app
         selected_app = app_config[active_key]
 
-        # SECCIÓN DE CONTENIDO (MANTENIDA ÍNTEGRA)
         if selected_app["func"]:
             selected_app["func"](
                 st, 
@@ -193,4 +174,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
