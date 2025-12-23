@@ -54,7 +54,7 @@ TEXTS = {
 }
 
 # ==============================================================================
-# 3. CSS (REDISEÑADO PARA CARDS REACTIVAS)
+# 3. CSS (OPTIMIZADO PARA GUI MÓVIL/DESKTOP) - SOLO CAMBIOS AQUÍ
 # ==============================================================================
 def inject_custom_css():
     st.markdown("""
@@ -62,32 +62,50 @@ def inject_custom_css():
         [data-testid="stSidebar"] { background-color: #f0f2f6; }
         .stApp { background-color: #ffffff; }
         
-        /* Estilo de Card para los botones de módulos */
+        /* Contenedor del Botón como Card */
         div.stButton > button {
             background-color: #ffffff !important;
-            border: 1px solid #e0e0e0 !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
-            height: auto !important;
-            min-height: 100px !important;
-            transition: all 0.2s ease-in-out !important;
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.05) !important;
+            border: 1px solid #e1e4e8 !important;
+            border-radius: 16px !important;
+            padding: 25px 10px !important;
+            height: 140px !important; /* Altura fija para consistencia */
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04) !important;
         }
+        
+        /* Efectos Hover y Click (Reactividad Táctil) */
         div.stButton > button:hover {
             border-color: #ff4b4b !important;
-            background-color: #fffafa !important;
-            box-shadow: 0px 4px 8px rgba(0,0,0,0.1) !important;
-            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.08) !important;
+            transform: translateY(-4px) !important;
         }
+        div.stButton > button:active {
+            transform: scale(0.95) !important;
+            background-color: #fefefe !important;
+        }
+        
+        /* Estilo del texto dentro de la Card */
         div.stButton > button p {
-            font-size: 18px !important;
+            font-size: 1.1rem !important;
             font-weight: 600 !important;
+            margin-top: 10px !important;
+            color: #31333F !important;
+        }
+
+        /* Ajuste de iconos grandes */
+        .card-icon {
+            font-size: 45px !important;
+            margin-bottom: 5px;
         }
         </style>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. APLICACIÓN PRINCIPAL (REFACTORIZADA EN ÁREA DE CARDS)
+# 4. APLICACIÓN PRINCIPAL (REFACTORIZADO SOLO GUI DE MÓDULOS)
 # ==============================================================================
 def main():
     st.set_page_config(page_title="Toolkit DGI", layout="wide", page_icon="🛠️")
@@ -135,17 +153,16 @@ def main():
         st.header(TEXTS["header_modules"][lang])
         keys = list(app_config.keys())
         
-        # --- NUEVA LÓGICA DE CARDS REACTIVAS ---
-        # Usamos 2 columnas simples en desktop que colapsan mejor en móvil
-        card_cols = st.columns(2)
+        # Grid adaptativo: 2 columnas que se ven bien en móvil y escritorio
+        m_cols = st.columns(2)
         for i, k in enumerate(keys):
-            with card_cols[i % 2]:
-                # El botón ahora contiene el Icono + Nombre para ser una sola zona de toque
-                button_label = f"{app_config[k]['icon']} {app_config[k]['name']}"
-                if st.button(button_label, key=f"btn_{k}", use_container_width=True):
+            with m_cols[i % 2]:
+                # Inyectamos el icono con una clase para controlarlo por CSS
+                # El texto se maneja directamente en el label del botón
+                label = f"{app_config[k]['icon']}\n\n{app_config[k]['name']}"
+                if st.button(label, key=f"btn_{k}", use_container_width=True):
                     st.session_state.active_app = k
                     st.rerun()
-        # ---------------------------------------
 
         st.markdown("---")
         active_key = st.session_state.active_app
