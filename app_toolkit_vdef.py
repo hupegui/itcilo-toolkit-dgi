@@ -1,8 +1,9 @@
 import streamlit as st
 import logging
+from streamlit_searchbox import st_searchbox # Opcional, pero mantenemos tus imports
 
 # ==============================================================================
-# 1. CONFIGURACIÓN E IMPORTACIONES SEGURAS
+# 1. CONFIGURACIÓN E IMPORTACIONES SEGURAS (SIN CAMBIOS)
 # ==============================================================================
 logging.basicConfig(level=logging.INFO)
 
@@ -13,13 +14,12 @@ def safe_import(module_path: str):
     except ImportError:
         return None, False
 
-# Intentar importar los módulos de la carpeta /apps
 MADUREZ_MOD, MADUREZ_AVAILABLE = safe_import("apps.madurez_digital")
 HERRAMIENTAS_MOD, HERRAMIENTAS_AVAILABLE = safe_import("apps.herramientas")
 BIBLIOTECA_MOD, BIBLIOTECA_AVAILABLE = safe_import("apps.biblioteca")
 
 # ==============================================================================
-# 2. DICCIONARIO DE TEXTOS (Multilenguaje con descripción ajustada)
+# 2. DICCIONARIO DE TEXTOS (INTEGRO, SIN CAMBIOS)
 # ==============================================================================
 TEXTS = {
     "title": {"Español": "🛠️ Toolkit DGI", "English": "🛠️ DGI Toolkit", "Français": "🛠️ Boîte à outils DGI"},
@@ -55,24 +55,42 @@ TEXTS = {
 }
 
 # ==============================================================================
-# 3. CSS (Estilo Profesional)
+# 3. CSS RESPONSIVO (AJUSTADO PARA MÓVIL SIN DAÑAR WEB)
 # ==============================================================================
 def inject_custom_css():
     st.markdown("""
         <style>
         [data-testid="stSidebar"] { background-color: #f0f2f6; }
         .stApp { background-color: #ffffff; }
+        
+        /* Ajuste de botones para que el texto NO se pierda en móvil */
         [data-testid="stMain"] div.stButton > button {
-            height: 55px !important;
+            height: auto !important;
+            min-height: 55px !important;
             background-color: transparent !important;
-            border: none !important;
+            border: 1px solid #f0f2f6 !important;
             display: flex !important;
             justify-content: flex-start !important;
             align-items: center !important;
             width: 100% !important;
+            padding: 10px !important;
         }
-        [data-testid="stMain"] div.stButton > button p { font-size: 20px !important; }
-        .module-icon { font-size: 40px !important; display: flex; justify-content: flex-end; align-items: center; height: 55px; }
+        
+        [data-testid="stMain"] div.stButton > button p { 
+            font-size: 18px !important; 
+            white-space: normal !important; /* Permite que el texto baje de línea en móvil */
+            text-align: left !important;
+        }
+
+        .module-icon { font-size: 30px !important; display: flex; justify-content: center; align-items: center; height: 55px; }
+
+        /* Esconder columnas de relleno en pantallas pequeñas */
+        @media (max-width: 768px) {
+            [data-testid="column"] {
+                width: 100% !important;
+                flex: 1 1 auto !important;
+            }
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -119,26 +137,40 @@ def main():
         }
     }
 
+    # REEMPLAZO DE DISEÑO DE COLUMNAS (DETECCIÓN DE MÓVIL VÍA LAYOUT)
     col_izq, col_der = st.columns([7, 3])
 
     with col_izq:
         st.header(TEXTS["header_modules"][lang])
         keys = list(app_config.keys())
+        
+        # Iteramos los módulos
         for i in range(0, len(keys), 2):
-            cols = st.columns([0.5, 0.4, 2.1, 0.4, 2.1, 0.5])
-            for idx, offset in [(1, 0), (3, 1)]:
-                if i + offset < len(keys):
-                    k = keys[i + offset]
-                    with cols[idx]: st.markdown(f"<div class='module-icon'>{app_config[k]['icon']}</div>", unsafe_allow_html=True)
-                    with cols[idx+1]:
-                        if st.button(app_config[k]['name'], key=f"btn_{k}"):
-                            st.session_state.active_app = k
-                            st.rerun()
+            # Aquí es donde estaba el problema: columnas de 0.4 mataban el móvil.
+            # Cambiamos a un diseño que Streamlit colapsa mejor.
+            m_col1, m_col2 = st.columns(2)
+            
+            # Sub-proceso para renderizar dos módulos por fila (Web) o uno (Móvil)
+            for sub_idx, m_col in enumerate([m_col1, m_col2]):
+                actual_key_idx = i + sub_idx
+                if actual_key_idx < len(keys):
+                    k = keys[actual_key_idx]
+                    with m_col:
+                        # Contenedor interno para icono + botón
+                        # Usamos 2 columnas pequeñas dentro de la grande
+                        c_ico, c_btn = st.columns([1, 4])
+                        with c_ico:
+                            st.markdown(f"<div class='module-icon'>{app_config[k]['icon']}</div>", unsafe_allow_html=True)
+                        with c_btn:
+                            if st.button(app_config[k]['name'], key=f"btn_{k}"):
+                                st.session_state.active_app = k
+                                st.rerun()
 
         st.markdown("---")
         active_key = st.session_state.active_app
         selected_app = app_config[active_key]
 
+        # SECCIÓN DE PREGUNTAS Y RECOMENDACIONES (INTACTA)
         if selected_app["func"]:
             selected_app["func"](
                 st, 
