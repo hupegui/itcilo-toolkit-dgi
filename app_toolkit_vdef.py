@@ -44,7 +44,7 @@ TEXTS = {
         "desc": {
             "Español": "Centro de utilidades digitales: herramientas de soporte para el mundo digital.", 
             "English": "Digital utility center: support tools for the digital world.", 
-            "Français": "Centre d'utilitaires numériques : outils de support pour le monde numérique."
+            "Français": "Centre d'utilitaires numériques : outils de support para el mundo digital."
         }
     },
     "mod_bib": {
@@ -55,7 +55,7 @@ TEXTS = {
 }
 
 # ==============================================================================
-# 3. CSS RESPONSIVO (AJUSTADO PARA MÓVIL SIN DAÑAR WEB)
+# 3. CSS RESPONSIVO (CORRECCIÓN DE DISPLAY PARA MÓVIL)
 # ==============================================================================
 def inject_custom_css():
     st.markdown("""
@@ -63,32 +63,41 @@ def inject_custom_css():
         [data-testid="stSidebar"] { background-color: #f0f2f6; }
         .stApp { background-color: #ffffff; }
         
-        /* Ajuste de botones para que el texto NO se pierda en móvil */
+        /* BOTÓN RESPONSIVO: Asegura que el icono y el texto se vean siempre */
         [data-testid="stMain"] div.stButton > button {
             height: auto !important;
-            min-height: 55px !important;
-            background-color: transparent !important;
-            border: 1px solid #f0f2f6 !important;
+            min-height: 60px !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+            border-radius: 10px !important;
             display: flex !important;
+            flex-direction: row !important; /* Icono al lado del texto */
             justify-content: flex-start !important;
             align-items: center !important;
             width: 100% !important;
-            padding: 10px !important;
+            padding: 10px 15px !important;
+            margin-bottom: 10px !important;
         }
         
+        /* Estilo del texto dentro del botón */
         [data-testid="stMain"] div.stButton > button p { 
             font-size: 18px !important; 
-            white-space: normal !important; /* Permite que el texto baje de línea en móvil */
+            margin: 0 !important;
+            padding-left: 10px !important;
             text-align: left !important;
+            white-space: normal !important;
         }
 
-        .module-icon { font-size: 30px !important; display: flex; justify-content: center; align-items: center; height: 55px; }
+        /* Estilo del icono */
+        .module-icon-container {
+            font-size: 25px !important;
+            margin-right: 10px !important;
+        }
 
-        /* Esconder columnas de relleno en pantallas pequeñas */
+        /* Forzar que las columnas no se achiquen a cero en móvil */
         @media (max-width: 768px) {
             [data-testid="column"] {
-                width: 100% !important;
-                flex: 1 1 auto !important;
+                min-width: 100% !important;
             }
         }
         </style>
@@ -137,40 +146,30 @@ def main():
         }
     }
 
-    # REEMPLAZO DE DISEÑO DE COLUMNAS (DETECCIÓN DE MÓVIL VÍA LAYOUT)
+    # Diseño principal: 2 columnas en Web, se apilan en Móvil
     col_izq, col_der = st.columns([7, 3])
 
     with col_izq:
         st.header(TEXTS["header_modules"][lang])
         keys = list(app_config.keys())
         
-        # Iteramos los módulos
-        for i in range(0, len(keys), 2):
-            # Aquí es donde estaba el problema: columnas de 0.4 mataban el móvil.
-            # Cambiamos a un diseño que Streamlit colapsa mejor.
-            m_col1, m_col2 = st.columns(2)
-            
-            # Sub-proceso para renderizar dos módulos por fila (Web) o uno (Móvil)
-            for sub_idx, m_col in enumerate([m_col1, m_col2]):
-                actual_key_idx = i + sub_idx
-                if actual_key_idx < len(keys):
-                    k = keys[actual_key_idx]
-                    with m_col:
-                        # Contenedor interno para icono + botón
-                        # Usamos 2 columnas pequeñas dentro de la grande
-                        c_ico, c_btn = st.columns([1, 4])
-                        with c_ico:
-                            st.markdown(f"<div class='module-icon'>{app_config[k]['icon']}</div>", unsafe_allow_html=True)
-                        with c_btn:
-                            if st.button(app_config[k]['name'], key=f"btn_{k}"):
-                                st.session_state.active_app = k
-                                st.rerun()
+        # SOLUCIÓN DE DISPLAY: Eliminamos sub-columnas complejas. 
+        # Ponemos el icono DENTRO del botón (o justo al lado) de forma simple.
+        for k in keys:
+            # Creamos una fila por módulo para máxima compatibilidad móvil
+            col_m1, col_m2 = st.columns([1, 10]) # Espacio mínimo para icono, máximo para botón
+            with col_m1:
+                st.markdown(f"<div class='module-icon-container'>{app_config[k]['icon']}</div>", unsafe_allow_html=True)
+            with col_m2:
+                if st.button(f"{app_config[k]['name']}", key=f"btn_{k}"):
+                    st.session_state.active_app = k
+                    st.rerun()
 
         st.markdown("---")
         active_key = st.session_state.active_app
         selected_app = app_config[active_key]
 
-        # SECCIÓN DE PREGUNTAS Y RECOMENDACIONES (INTACTA)
+        # SECCIÓN DE CONTENIDO (MANTENIDA ÍNTEGRA)
         if selected_app["func"]:
             selected_app["func"](
                 st, 
