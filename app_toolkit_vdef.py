@@ -1,6 +1,6 @@
 import streamlit as st
 import logging
-from streamlit_searchbox import st_searchbox # Opcional, pero mantenemos tus imports
+#from streamlit_searchbox import st_searchbox # Opcional, pero mantenemos tus imports
 
 # ==============================================================================
 # 1. CONFIGURACIÓN E IMPORTACIONES SEGURAS (SIN CAMBIOS)
@@ -193,3 +193,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
